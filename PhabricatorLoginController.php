@@ -55,6 +55,41 @@ final class PhabricatorLoginController
       return id(new AphrontPlainTextResponse())->setContent($message);
     }
 
+
+#################### START OF SSO CODE ####################
+
+$name = $_ENV['GodAuth-User'];
+$email = $_ENV['GodAuth-Email'];
+
+$user = id(new PhabricatorUser())->loadOneWhere('username = %s', $name);
+
+if (!$user){
+	$user = new PhabricatorUser();
+	$user->setUsername($name);
+	$user->setRealname($name);
+
+	$admin = id(new PhabricatorUser())->loadOneWhere('username = %s', 'admin');
+
+	$email_object = id(new PhabricatorUserEmail())->setAddress($email)->setIsVerified(1);
+
+	id(new PhabricatorUserEditor())->setActor($admin)->createNewUser($user, $email_object);
+}
+
+$session_key = $user->establishSession('web');
+
+$request->setCookie('phusr', $user->getUsername());
+$request->setCookie('phsid', $session_key);
+
+$uri = new PhutilURI('/login/validate/');
+$uri->setQueryParams(array(
+	'phusr' => $user->getUsername(),
+));
+
+return id(new AphrontRedirectResponse())->setURI((string)$uri);
+
+##################### END OF SSO CODE #####################
+
+
     $error_view = null;
     if ($request->getCookie('phusr') && $request->getCookie('phsid')) {
       // The session cookie is invalid, so clear it.

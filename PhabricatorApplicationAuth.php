@@ -25,7 +25,7 @@ final class PhabricatorApplicationAuth extends PhabricatorApplication {
       $item->setWorkflow(true);
       $item->setHref('/logout/');
       $item->setSortOrder(1.0);
-      $items[] = $item;
+      //$items[] = $item;
     }
 
     return $items;
